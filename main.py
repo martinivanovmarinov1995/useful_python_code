@@ -3,12 +3,13 @@ import boto3
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, ceil
 import json
-
+import os
 spark = SparkSession.builder.getOrCreate()
 spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+pd.DataFrame.iteritems = pd.DataFrame.items
 
-ACCESS_KEY = 'AKIAQXDDMEB35SLU2DTP'
-SECRET_KEY = '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'
+ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY_ID')
+SECRET_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
 client = boto3.client('s3',
                       aws_access_key_id=ACCESS_KEY,
