@@ -3,9 +3,8 @@ import boto3
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, ceil
 import json
+import pyodbc
 import os
-import requests
-
 pd.DataFrame.iteritems = pd.DataFrame.items
 
 AWS_S3_BUCKET = 'awsdataengineer123'
@@ -13,10 +12,6 @@ DATASET = 'photos'
 URL = f'https://jsonplaceholder.typicode.com/{DATASET}'
 ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY_ID')
 SECRET_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-
-# def http_get(URL):
-#     request = requests.get(URL)
-#     return json.loads(request.text)
 
 
 def data_transformation(client, bucket, spark):
@@ -33,25 +28,53 @@ def data_transformation(client, bucket, spark):
         return updated_df
 
 
-def main():
-    # data = http_get(URL)
-    # dataframe = pd.DataFrame.from_dict(data)
-    # dataframe.to_json('s3://awsdataengineer123/archive/photos.json')
+def sql_server_commit(spark_view):
+    conn = pyodbc.connect('Driver={SQL Server Native Client 11.0};'
+                          'Server=(localdb)\MSSQLLocalDB;'
+                          'Database=mydb;'
+                          'username=localhost;'
+                          'TrustedConnection=yes;')
+    cursor = conn.cursor()
+    cursor.execute("""  DROP TABLE [mydb].[dbo].[employees];
+                            CREATE TABLE [mydb].[dbo].[employees]
+                            (
+                            country_name varchar(max),
+                            country_code varchar(max),
+                            year integer,
+                            value varchar(max),
+                            century varchar(max)
+                            )
+                            """)
+    conn.commit()
 
-    # conf
+    insert_query = 'INSERT INTO  [mydb].[dbo].[employees] (country_name, country_code, year, value, century) values (' \
+                   '?,?,?,?,?) '
+
+    # Write to SQL Table
+    for row in spark_view.rdd.collect():
+        cursor.execute(insert_query, row['Country Name'], row['Country Code'], row['Year'], row['Value'],
+                       row['Century'])
+        conn.commit()
+
+
+# def move_files_to_archive(spark, updated_df, client, bucket):
+
+
+def main():
+    # configurations
     spark = SparkSession.builder.getOrCreate()
     spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
+
     client = boto3.client('s3',
                           aws_access_key_id=ACCESS_KEY,
                           aws_secret_access_key=SECRET_KEY, )
 
     data = data_transformation(client=client, bucket=AWS_S3_BUCKET, spark=spark)
 
-    # create temp view
-    data.createOrReplaceTempView('people')
-    spark.sql('Select distinct Century from people where Century = "20" ').show()
+    #data2 = data.repartition(16)
+
+    sql_server_commit(data)
 
 
 if __name__ == "__main__":
     main()
-
