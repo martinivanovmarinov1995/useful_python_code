@@ -32,5 +32,9 @@ spark_df_reader = spark.read.format("csv").option("header", True).schema(schema)
 # Call load() to actually read the data and create a DataFrame
 spark_df = spark_df_reader.load(url)
 
-print(spark_df.printSchema())
-print(spark_df.show())
+# Create Temp View
+spark_df.createOrReplaceTempView('user_data')
+
+# Call sql method on the SparkSession
+dataf = spark.sql("""SELECT * FROM user_data WHERE VendorID = 1""")
+print(dataf.show())
