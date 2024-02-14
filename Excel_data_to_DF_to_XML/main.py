@@ -25,7 +25,6 @@ soap_client.settings.xml_huge_tree = True
 print(soap_client)
 
 url = r'C:\Users\Martin_Marinov\Desktop\Enablon_Write_data_API\eHSE - Event Reporting Prototype.xlsx'
-#target_path = r'C:\Users\Martin_Marinov\Desktop\Enablon_Write_data_API\enablon.xml'
 df = pd.read_excel(url, sheet_name='Sheet2', engine='openpyxl')
 print(df.head())
 df = df.fillna(" ")
