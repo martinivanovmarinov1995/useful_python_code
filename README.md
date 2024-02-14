@@ -1,5 +1,4 @@
-<span style="font-size: larger;"> Hello Markus and Denis. :) </span>  
-**Repository ReadMe**  
+<span style="font-size: xx-large;">**Hello Markus and Denis.**</span>
 Welcome to my GitHub repository!
 
 **Introduction**  
